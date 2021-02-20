@@ -7,13 +7,28 @@ interface MakeSignUpControllerReturn {
   emailValidatorMock: EmailValidator;
 }
 
-const makeSignUpController = (): MakeSignUpControllerReturn => {
+const makeEmailValidator = (): EmailValidator => {
   class EmailValidatorMock implements EmailValidator {
     isValid(email: string): boolean {
       return true;
     }
   }
-  const emailValidatorMock = new EmailValidatorMock();
+
+  return new EmailValidatorMock();
+};
+
+const makeEmailValidatorWithError = (): EmailValidator => {
+  class EmailValidatorMock implements EmailValidator {
+    isValid(email: string): boolean {
+      throw new Error();
+    }
+  }
+
+  return new EmailValidatorMock();
+};
+
+const makeSignUpController = (): MakeSignUpControllerReturn => {
+  const emailValidatorMock = makeEmailValidator();
   const signUpController = new SignUpController(emailValidatorMock);
 
   return { signUpController, emailValidatorMock };
@@ -123,12 +138,7 @@ describe('SignUp Controller', () => {
   });
 
   it('should return 500 if EmailValidator throws an exception', () => {
-    class EmailValidatorMock implements EmailValidator {
-      isValid(email: string): boolean {
-        throw new Error();
-      }
-    }
-    const emailValidatorMock = new EmailValidatorMock();
+    const emailValidatorMock = makeEmailValidatorWithError();
     const signUpController = new SignUpController(emailValidatorMock);
 
     const httpRequest = {
