@@ -217,4 +217,24 @@ describe('SignUp Controller', () => {
       password: 'any_password',
     });
   });
+
+  it('should return 500 if CreateAccount throws an exception', () => {
+    const { signUpController, createAccountMock } = makeSignUpController();
+    jest.spyOn(createAccountMock, 'create').mockImplementationOnce(() => {
+      throw new Error();
+    });
+
+    const httpRequest = {
+      body: {
+        name: 'any name',
+        email: 'any_email@email.com',
+        password: 'any_password',
+        passwordConfirmation: 'any_password',
+      },
+    };
+
+    const httpResponse = signUpController.handle(httpRequest);
+    expect(httpResponse.statusCode).toBe(500);
+    expect(httpResponse.body).toEqual(new ServerError());
+  });
 });
