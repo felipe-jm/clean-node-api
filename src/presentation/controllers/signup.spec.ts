@@ -1,11 +1,11 @@
 import SignUpController from './signup';
 import { MissingParamError, InvalidParamError, ServerError } from '../errors';
 import { EmailValidator } from '../protocols';
-
-interface MakeSignUpControllerReturn {
-  signUpController: SignUpController;
-  emailValidatorMock: EmailValidator;
-}
+import { AccountModel } from '../../domain/models/account';
+import {
+  CreateAccount,
+  CreateAccountModel,
+} from '../../domain/usecases/create-account';
 
 const makeEmailValidator = (): EmailValidator => {
   class EmailValidatorMock implements EmailValidator {
@@ -17,11 +17,38 @@ const makeEmailValidator = (): EmailValidator => {
   return new EmailValidatorMock();
 };
 
+const makeCreateAccount = (): CreateAccount => {
+  class CreateAccountMock implements CreateAccount {
+    create(account: CreateAccountModel): AccountModel {
+      const fakeAccount = {
+        id: 'valid_id',
+        name: 'valid_name',
+        email: 'valid_email@emai.com',
+        password: 'valid_password',
+      };
+
+      return fakeAccount;
+    }
+  }
+
+  return new CreateAccountMock();
+};
+
+interface MakeSignUpControllerReturn {
+  signUpController: SignUpController;
+  emailValidatorMock: EmailValidator;
+  createAccountMock: CreateAccount;
+}
+
 const makeSignUpController = (): MakeSignUpControllerReturn => {
   const emailValidatorMock = makeEmailValidator();
-  const signUpController = new SignUpController(emailValidatorMock);
+  const createAccountMock = makeCreateAccount();
+  const signUpController = new SignUpController(
+    emailValidatorMock,
+    createAccountMock,
+  );
 
-  return { signUpController, emailValidatorMock };
+  return { signUpController, emailValidatorMock, createAccountMock };
 };
 
 describe('SignUp Controller', () => {
@@ -164,5 +191,26 @@ describe('SignUp Controller', () => {
     const httpResponse = signUpController.handle(httpRequest);
     expect(httpResponse.statusCode).toBe(500);
     expect(httpResponse.body).toEqual(new ServerError());
+  });
+
+  it('should call CreateAccount with correct values', () => {
+    const { signUpController, createAccountMock } = makeSignUpController();
+    const createSpy = jest.spyOn(createAccountMock, 'create');
+
+    const httpRequest = {
+      body: {
+        name: 'any name',
+        email: 'any_email@email.com',
+        password: 'any_password',
+        passwordConfirmation: 'any_password',
+      },
+    };
+
+    signUpController.handle(httpRequest);
+    expect(createSpy).toHaveBeenCalledWith({
+      name: 'any name',
+      email: 'any_email@email.com',
+      password: 'any_password',
+    });
   });
 });
