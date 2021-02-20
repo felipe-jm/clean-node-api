@@ -2,6 +2,7 @@ import SignUpController from './signup';
 import MissingParamError from '../errors/missing-param-error';
 import InvalidParamError from '../errors/invalid-param-error';
 import { EmailValidator } from '../protocols/email-validator';
+import ServerError from '../errors/server-error';
 
 interface MakeSignUpControllerReturn {
   signUpController: SignUpController;
@@ -121,5 +122,28 @@ describe('SignUp Controller', () => {
 
     signUpController.handle(httpRequest);
     expect(isValidSpy).toHaveBeenCalledWith('any_email@email.com');
+  });
+
+  it('should return 500 if EmailValidator throws an exception', () => {
+    class EmailValidatorMock implements EmailValidator {
+      isValid(email: string): boolean {
+        throw new Error();
+      }
+    }
+    const emailValidatorMock = new EmailValidatorMock();
+    const signUpController = new SignUpController(emailValidatorMock);
+
+    const httpRequest = {
+      body: {
+        name: 'any name',
+        email: 'any_email@email.com',
+        password: 'any_password',
+        passwordConfirmation: 'any_password',
+      },
+    };
+
+    const httpResponse = signUpController.handle(httpRequest);
+    expect(httpResponse.statusCode).toBe(500);
+    expect(httpResponse.body).toEqual(new ServerError());
   });
 });
