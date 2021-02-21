@@ -17,6 +17,11 @@ export const MongoHelper = {
   getCollection(name: string): Collection {
     return this.client.db().collection(name);
   },
+
+  mapper: (collection: any): any => {
+    const { _id, ...collectionWithoutMongoId } = collection;
+    return { ...collectionWithoutMongoId, id: _id };
+  },
 };
 
 export default MongoHelper;
