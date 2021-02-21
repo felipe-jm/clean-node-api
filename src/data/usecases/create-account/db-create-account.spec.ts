@@ -1,5 +1,4 @@
-import { rejects } from 'assert';
-import { Encrypter } from '../../protocols/encrypter';
+import { Encrypter } from './db-create-account-procotols';
 import DbCreateAccount from './db-create-account';
 
 interface MakeDbCreateAccountReturn {
