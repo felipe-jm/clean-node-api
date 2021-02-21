@@ -6,13 +6,17 @@ interface MakeDbCreateAccountReturn {
   encrypterMock: Encrypter;
 }
 
-const makeDbCreateAccount = (): MakeDbCreateAccountReturn => {
-  class EncrypterMock {
+const makeEncrypter = (): Encrypter => {
+  class EncrypterMock implements Encrypter {
     async encrypt(password: string): Promise<string> {
       return new Promise(resolve => resolve('hashed_password'));
     }
   }
-  const encrypterMock = new EncrypterMock();
+  return new EncrypterMock();
+};
+
+const makeDbCreateAccount = (): MakeDbCreateAccountReturn => {
+  const encrypterMock = makeEncrypter();
   const dbCreateAccount = new DbCreateAccount(encrypterMock);
   return {
     dbCreateAccount,
