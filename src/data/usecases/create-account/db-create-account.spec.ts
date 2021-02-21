@@ -1,5 +1,5 @@
 import {
-  Encrypte,
+  Encrypter,
   CreateAccountModel,
   AccountModel,
   CreateAccountRepository,
