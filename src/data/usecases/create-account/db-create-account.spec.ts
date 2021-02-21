@@ -1,10 +1,10 @@
-import { Encrypter } from './db-create-account-procotols';
+import {
+  Encrypte,
+  CreateAccountModel,
+  AccountModel,
+  CreateAccountRepository,
+} from './db-create-account-procotols';
 import DbCreateAccount from './db-create-account';
-
-interface MakeDbCreateAccountReturn {
-  dbCreateAccount: DbCreateAccount;
-  encrypterMock: Encrypter;
-}
 
 const makeEncrypter = (): Encrypter => {
   class EncrypterMock implements Encrypter {
@@ -15,12 +15,38 @@ const makeEncrypter = (): Encrypter => {
   return new EncrypterMock();
 };
 
+const makeCreateAccountRepository = (): CreateAccountRepository => {
+  class CreateAccountRepositoryMock implements CreateAccountRepository {
+    async create(account: CreateAccountModel): Promise<AccountModel> {
+      const fakeAccount = {
+        id: 'valid_id',
+        name: 'valid_name',
+        email: 'valid_email',
+        password: 'hashed_password',
+      };
+      return new Promise(resolve => resolve(fakeAccount));
+    }
+  }
+  return new CreateAccountRepositoryMock();
+};
+
+interface MakeDbCreateAccountReturn {
+  dbCreateAccount: DbCreateAccount;
+  encrypterMock: Encrypter;
+  createAccountRepositoryMock: CreateAccountRepository;
+}
+
 const makeDbCreateAccount = (): MakeDbCreateAccountReturn => {
   const encrypterMock = makeEncrypter();
-  const dbCreateAccount = new DbCreateAccount(encrypterMock);
+  const createAccountRepositoryMock = makeCreateAccountRepository();
+  const dbCreateAccount = new DbCreateAccount(
+    encrypterMock,
+    createAccountRepositoryMock,
+  );
   return {
     dbCreateAccount,
     encrypterMock,
+    createAccountRepositoryMock,
   };
 };
 
@@ -51,5 +77,24 @@ describe('DbCreateAccount Usecase', () => {
     };
     const promise = dbCreateAccount.create(accountData);
     await expect(promise).rejects.toThrow();
+  });
+
+  it('should call CreateAccountRepository with correct values', async () => {
+    const {
+      dbCreateAccount,
+      createAccountRepositoryMock,
+    } = makeDbCreateAccount();
+    const createSpy = jest.spyOn(createAccountRepositoryMock, 'create');
+    const accountData = {
+      name: 'valid_name',
+      email: 'valid_email',
+      password: 'valid_password',
+    };
+    await dbCreateAccount.create(accountData);
+    expect(createSpy).toHaveBeenCalledWith({
+      name: 'valid_name',
+      email: 'valid_email',
+      password: 'hashed_password',
+    });
   });
 });
