@@ -10,8 +10,12 @@ describe('Account Mongodb Repository', () => {
     await MongoClient.disconnect();
   });
 
+  const makeAccountMongoRepository = (): AccountMongoRepository => {
+    return new AccountMongoRepository();
+  };
+
   it('should return an account on success', async () => {
-    const accountMongoRepository = new AccountMongoRepository();
+    const accountMongoRepository = makeAccountMongoRepository();
     const account = await accountMongoRepository.create({
       name: 'any_name',
       email: 'any_email',
