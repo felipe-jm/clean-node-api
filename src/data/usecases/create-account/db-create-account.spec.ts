@@ -1,3 +1,4 @@
+import { rejects } from 'assert';
 import { Encrypter } from '../../protocols/encrypter';
 import DbCreateAccount from './db-create-account';
 
@@ -35,5 +36,21 @@ describe('DbCreateAccount Usecase', () => {
     };
     await dbCreateAccount.create(accountData);
     expect(encryptSpy).toHaveBeenCalledWith('valid_password');
+  });
+
+  it('should throw if Encrypter throws', async () => {
+    const { dbCreateAccount, encrypterMock } = makeDbCreateAccount();
+    jest
+      .spyOn(encrypterMock, 'encrypt')
+      .mockReturnValueOnce(
+        new Promise((resolve, reject) => reject(new Error())),
+      );
+    const accountData = {
+      name: 'valid_name',
+      email: 'valid_email',
+      password: 'valid_password',
+    };
+    const promise = dbCreateAccount.create(accountData);
+    await expect(promise).rejects.toThrow();
   });
 });
