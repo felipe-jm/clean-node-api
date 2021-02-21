@@ -97,4 +97,23 @@ describe('DbCreateAccount Usecase', () => {
       password: 'hashed_password',
     });
   });
+
+  it('should throw if CreateAccountRepository throws', async () => {
+    const {
+      dbCreateAccount,
+      createAccountRepositoryMock,
+    } = makeDbCreateAccount();
+    jest
+      .spyOn(createAccountRepositoryMock, 'create')
+      .mockReturnValueOnce(
+        new Promise((resolve, reject) => reject(new Error())),
+      );
+    const accountData = {
+      name: 'valid_name',
+      email: 'valid_email',
+      password: 'valid_password',
+    };
+    const promise = dbCreateAccount.create(accountData);
+    await expect(promise).rejects.toThrow();
+  });
 });
